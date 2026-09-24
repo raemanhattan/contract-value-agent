@@ -1,7 +1,10 @@
 .venv/
 __pycache__/
 *.pyc
-data/db/*.duckdb
+# contract_value.duckdb is committed deliberately -- Railway's build has no
+# way to regenerate it (needs the raw Spotrac PDFs plus live nflverse
+# network calls), so the built artifact ships instead. Re-commit after
+# rebuilding locally when the underlying data changes.
 data/raw/cap/**/*.pdf
 node_modules/
 .next/

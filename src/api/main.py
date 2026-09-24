@@ -16,6 +16,7 @@ Run: PYTHONPATH=src .venv/bin/uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -44,9 +45,19 @@ def _load_market_model() -> sm.regression.linear_model.RegressionResultsWrapper:
 
 app = FastAPI(title="Contract Value Agent API")
 
+# CORS_ALLOWED_ORIGINS is a comma-separated list -- the portfolio shell's
+# origin and this app's own standalone frontend origin both need to be
+# listed in production, since they're different hosts.
+_default_origins = "http://localhost:3000,http://localhost:3001"
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CORS_ALLOWED_ORIGINS", _default_origins).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
