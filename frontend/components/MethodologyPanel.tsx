@@ -33,6 +33,105 @@ function coefficientSentence(name: string, estimate: number): string {
   return "";
 }
 
+function MiniDiagram() {
+  return (
+    <svg viewBox="0 0 260 130" className="w-full" aria-hidden>
+      <defs>
+        <linearGradient id="overpayZone" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--overpay-red)" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="var(--overpay-red)" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="valueZone" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--value-green)" stopOpacity="0" />
+          <stop offset="100%" stopColor="var(--value-green)" stopOpacity="0.14" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="260" height="130" fill="url(#overpayZone)" />
+      <rect x="0" y="0" width="260" height="130" fill="url(#valueZone)" />
+      <path
+        d="M 10 118 Q 90 108 150 70 T 250 20"
+        fill="none"
+        stroke="var(--ink-faint)"
+        strokeWidth="1.5"
+        strokeDasharray="4 3"
+      />
+      <circle cx="150" cy="70" r="3.5" fill="var(--accent)" />
+      <line x1="150" y1="70" x2="150" y2="40" stroke="var(--overpay-red)" strokeWidth="1.3" />
+      <path d="M 150 40 l -3 6 h 6 z" fill="var(--overpay-red)" />
+      <text x="154" y="42" fontSize="7" fontFamily="var(--font-mono)" fill="var(--overpay-red)">
+        paid above → overpay
+      </text>
+      <text x="10" y="126" fontSize="7" fontFamily="var(--font-mono)" fill="var(--value-green)">
+        paid below → value
+      </text>
+      <text x="60" y="14" fontSize="7" fontFamily="var(--font-mono)" fill="var(--ink-faint)">
+        expected pay
+      </text>
+      <text x="4" y="64" fontSize="7" fontFamily="var(--font-mono)" fill="var(--ink-faint)" transform="rotate(-90 10 70)">
+      </text>
+    </svg>
+  );
+}
+
+export function ValueSidebar() {
+  return (
+    <div className="space-y-4">
+      <section className="border border-border bg-surface p-6">
+        <h3 className="font-display text-lg font-bold uppercase tracking-tight text-ink">
+          How value is calculated
+        </h3>
+        <div className="mt-4 rounded border border-border bg-surface-sunken p-3">
+          <MiniDiagram />
+          <p className="mt-1 text-center font-mono text-[10px] text-ink-faint">
+            production before signing →
+          </p>
+        </div>
+        <p className="mt-4 text-[13px] leading-relaxed text-ink-soft">
+          The model predicts what share of the cap a player&apos;s production{" "}
+          <em>before</em> signing is worth. Paid more than that:{" "}
+          <span className="font-semibold text-overpay">overpay</span>. Paid less:{" "}
+          <span className="font-semibold text-value">good value</span>.
+        </p>
+        <a
+          href="/#methodology"
+          className="mt-3 inline-block font-display text-[12px] font-semibold uppercase tracking-wide text-accent hover:underline"
+        >
+          show the math →
+        </a>
+      </section>
+
+      <section className="border border-border bg-surface p-6">
+        <h3 className="font-display text-[13px] font-bold uppercase tracking-tight text-ink">
+          Reading the table
+        </h3>
+        <dl className="mt-3 space-y-3 text-[12px]">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex w-8 shrink-0 items-center gap-0.5">
+              <span className="h-1.5 w-3 rounded-full bg-value" />
+              <span className="h-3 w-px bg-ink" />
+            </div>
+            <dd className="text-ink-soft">
+              tick = model&apos;s expected pay; bar = actual pay
+            </dd>
+          </div>
+          <div className="flex items-start gap-3">
+            <dt className="w-8 shrink-0 font-mono text-[10px] font-semibold text-amber">
+              LOW
+              <br />
+              SAMPLE
+            </dt>
+            <dd className="text-ink-soft">fewer than 8 games the season before signing</dd>
+          </div>
+          <div className="flex items-start gap-3">
+            <dt className="w-8 shrink-0 font-mono text-[11px] font-semibold text-ink">0.06×</dt>
+            <dd className="text-ink-soft">actual pay ÷ expected pay</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+  );
+}
+
 export default function MethodologyPanel() {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -44,7 +143,7 @@ export default function MethodologyPanel() {
   return (
     <section className="border border-border bg-surface">
       <div className="border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-xl font-bold uppercase tracking-tight text-ink">
               How player value is calculated
@@ -52,8 +151,9 @@ export default function MethodologyPanel() {
             <p className="mt-1 max-w-[68ch] text-[14px] leading-relaxed text-ink-soft">
               A statistical model predicts what share of the salary cap a player&apos;s
               production <em>before</em> signing should be worth. If a player is actually paid
-              more than that prediction, the deal is an <strong className="text-overpay">overpay</strong>{" "}
-              for the team. If paid less, it&apos;s <strong className="text-value">good value</strong>.
+              more than that prediction, the deal is an{" "}
+              <strong className="text-overpay">overpay</strong> for the team. If paid less,
+              it&apos;s <strong className="text-value">good value</strong>.
             </p>
           </div>
           <button

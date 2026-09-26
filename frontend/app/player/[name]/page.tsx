@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import PeerComparisonChart from "@/components/PeerComparisonChart";
+import ProductionTrend from "@/components/ProductionTrend";
 import {
   ApiNotFoundError,
   fetchPlayerDetail,
@@ -155,11 +156,21 @@ export default function PlayerPage({ params }: { params: Promise<{ name: string 
     <div className="min-h-screen bg-bg">
       <SiteHeader />
 
-      <div className="border-b border-border-strong bg-header-raised">
+      <div className="border-b border-border bg-surface">
         <div className="mx-auto max-w-7xl px-6 py-3 sm:px-8">
-          <Link href="/" className="font-display text-[13px] font-semibold uppercase tracking-wide text-white/60 hover:text-white">
-            ← Back to dashboard
-          </Link>
+          <nav className="font-mono text-[12px] text-ink-faint">
+            <Link href="/" className="hover:text-ink">
+              Players
+            </Link>
+            {contract?.contract?.position && (
+              <>
+                {" / "}
+                <span>{contract.contract.position}</span>
+              </>
+            )}
+            {" / "}
+            <span className="text-ink">{player}</span>
+          </nav>
         </div>
       </div>
 
@@ -185,89 +196,118 @@ export default function PlayerPage({ params }: { params: Promise<{ name: string 
 
         {data && (
           <div className="space-y-6">
-            {/* Player header card */}
-            <section className="border border-border bg-surface">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-6 py-5">
-                <div>
-                  <p className="font-mono text-[12px] uppercase tracking-wide text-ink-faint">
-                    {contract?.contract?.position ?? surplus?.position ?? ""} ·{" "}
-                    {contract?.contract?.team ?? ""}
-                  </p>
-                  <h1 className="font-display text-4xl font-bold uppercase tracking-tight text-ink">
-                    {player}
-                  </h1>
-                </div>
-                {surplus?.found && (
-                  <div
-                    className={`rounded px-4 py-2 text-center ${
-                      surplus.team_is_overpaying ? "bg-overpay-bg" : "bg-value-bg"
-                    }`}
-                  >
-                    <div
-                      className={`font-display text-2xl font-bold uppercase tracking-tight ${
-                        surplus.team_is_overpaying ? "text-overpay" : "text-value"
-                      }`}
-                    >
-                      {surplus.team_is_overpaying ? "Overpay" : "Good Value"}
-                    </div>
-                    <div className="font-mono text-[11px] text-ink-faint">
-                      {surplus.pay_vs_production_ratio?.toFixed(2)}× expected pay
-                    </div>
+            {/* Title + contract facts */}
+            <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+              <div>
+                <p className="font-mono text-[12px] uppercase tracking-wide text-ink-faint">
+                  {contract?.contract?.position ?? surplus?.position ?? ""} ·{" "}
+                  {contract?.contract?.team ?? ""} · signed{" "}
+                  {contract?.contract?.start_year ?? surplus?.signing_season ?? ""}
+                </p>
+                <h1 className="font-display text-5xl font-bold uppercase tracking-tight text-ink">
+                  {player}
+                </h1>
+
+                {contract?.found && contract.contract && (
+                  <div className="mt-5 grid grid-cols-2 divide-x divide-border border border-border sm:grid-cols-4">
+                    <HeaderStat label="Length" value={`${contract.contract.length_years} yr`} />
+                    <HeaderStat label="Total" value={formatMoney(contract.contract.total_value)} />
+                    <HeaderStat label="Avg / yr" value={formatMoney(contract.contract.average_salary)} />
+                    {contract.current_cap_hit ? (
+                      <HeaderStat
+                        label={`${contract.current_cap_hit.season} cap hit`}
+                        value={formatMoney(contract.current_cap_hit.cap_hit)}
+                      />
+                    ) : (
+                      <HeaderStat label="Signed" value={String(contract.contract.start_year)} />
+                    )}
                   </div>
                 )}
               </div>
 
-              {contract?.found && contract.contract && (
-                <div className="grid grid-cols-2 divide-x divide-border border-b border-border sm:grid-cols-3 lg:grid-cols-6">
-                  <HeaderStat label="Contract" value={`${contract.contract.length_years} yr`} />
-                  <HeaderStat label="Total value" value={formatMoney(contract.contract.total_value)} />
-                  <HeaderStat label="Avg salary" value={formatMoney(contract.contract.average_salary)} />
-                  <HeaderStat label="Signed" value={String(contract.contract.start_year)} />
-                  {contract.current_cap_hit && (
-                    <>
-                      <HeaderStat label="2026 cap hit" value={formatMoney(contract.current_cap_hit.cap_hit)} />
-                      <HeaderStat
-                        label="2026 cap %"
-                        value={`${contract.current_cap_hit.cap_hit_pct.toFixed(2)}%`}
-                      />
-                    </>
-                  )}
-                </div>
-              )}
-
-              {surplus?.found && (
-                <div className="px-6 py-5">
-                  <p className="text-[15px] font-medium leading-relaxed text-ink">
+              {surplus?.found && surplus.pay_vs_production_ratio !== undefined && (
+                <div
+                  className={`border p-5 ${
+                    surplus.team_is_overpaying
+                      ? "border-overpay/30 bg-overpay-bg"
+                      : "border-value/30 bg-value-bg"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`flex items-center gap-1.5 font-display text-lg font-bold uppercase tracking-tight ${
+                        surplus.team_is_overpaying ? "text-overpay" : "text-value"
+                      }`}
+                    >
+                      <span aria-hidden>{surplus.team_is_overpaying ? "▲" : "●"}</span>
+                      {surplus.team_is_overpaying ? "Overpay" : "Good Value"}
+                    </span>
+                    <span className="font-mono text-[13px] text-ink-faint">
+                      {surplus.pay_vs_production_ratio.toFixed(2)}×
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
                     {plainVerdict()}
                   </p>
+
+                  {surplus.actual_cap_pct_at_signing !== undefined &&
+                    surplus.model_predicted_cap_pct !== undefined && (
+                      <div className="mt-4 space-y-2">
+                        <ExpectedActualBar
+                          label="Expected"
+                          value={surplus.model_predicted_cap_pct}
+                          max={Math.max(surplus.model_predicted_cap_pct, surplus.actual_cap_pct_at_signing)}
+                          tone="faint"
+                        />
+                        <ExpectedActualBar
+                          label="Actual"
+                          value={surplus.actual_cap_pct_at_signing}
+                          max={Math.max(surplus.model_predicted_cap_pct, surplus.actual_cap_pct_at_signing)}
+                          tone={surplus.team_is_overpaying ? "overpay" : "value"}
+                        />
+                      </div>
+                    )}
+
                   {surplus.trailing_production && (
-                    <p className="mt-1 text-[13px] leading-relaxed text-ink-faint">
+                    <p className="mt-4 border-t border-border pt-3 text-[12px] leading-relaxed text-ink-faint">
                       Based on{" "}
                       <span className="tabular font-medium text-ink-soft">
-                        {surplus.trailing_production.fantasy_points_ppr.toFixed(0)} fantasy
-                        points
+                        {surplus.trailing_production.fantasy_points_ppr.toFixed(0)} fantasy points
                       </span>{" "}
                       over{" "}
                       <span className="tabular font-medium text-ink-soft">
                         {surplus.trailing_production.games} games
                       </span>{" "}
-                      the season before signing
+                      in {(surplus.signing_season ?? 1) - 1}, the season before signing.{" "}
+                      <a href="#production-trend" className="text-accent hover:underline">
+                        Why this number?
+                      </a>
                       {surplus.low_confidence && (
-                        <> — a small sample, so treat this valuation with caution</>
+                        <span className="text-amber"> — a small sample, treat with caution.</span>
                       )}
-                      .
                     </p>
                   )}
                 </div>
               )}
               {!surplus?.found && (
-                <div className="px-6 py-5 text-[14px] text-ink-soft">
+                <div className="border border-border bg-surface p-5 text-[14px] text-ink-soft">
                   {surplus?.note ?? "No market-model valuation available for this player."}
                 </div>
               )}
             </section>
 
-            {/* Career stats table */}
+            {/* Production trend */}
+            {data.stats_history.length > 0 && (
+              <div id="production-trend" className="scroll-mt-20">
+                <ProductionTrend
+                  rows={data.stats_history}
+                  highlightSeason={(surplus?.signing_season ?? 1) - 1}
+                  position={contract?.contract?.position ?? surplus?.position}
+                />
+              </div>
+            )}
+
+            {/* Full season-by-season table */}
             {data.stats_history.length > 0 && (
               <CareerStatsTable
                 rows={data.stats_history}
@@ -285,6 +325,35 @@ export default function PlayerPage({ params }: { params: Promise<{ name: string 
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function ExpectedActualBar({
+  label,
+  value,
+  max,
+  tone,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  tone: "faint" | "value" | "overpay";
+}) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  const barColor =
+    tone === "faint" ? "bg-ink-faint/50" : tone === "overpay" ? "bg-overpay" : "bg-value";
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-14 shrink-0 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+        {label}
+      </span>
+      <div className="h-2 flex-1 rounded-full bg-surface-sunken">
+        <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-14 shrink-0 text-right font-mono text-[11px] text-ink">
+        {value.toFixed(2)}%
+      </span>
     </div>
   );
 }
